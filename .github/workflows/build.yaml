@@ -14,7 +14,7 @@ jobs:
         SERVER_VERSION=1.23.1
       image_tag: |
         latest
-        1.23.1-bullseye-r1 # renovate: datasource=github-releases depName=nginx/nginx
+        1.23.1-bullseye-r2 # renovate: datasource=github-releases depName=nginx/nginx
         1.23.1-bullseye # renovate: datasource=github-releases depName=nginx/nginx
         1.23.1 # renovate: datasource=github-releases depName=nginx/nginx
         1.23
@@ -27,7 +27,7 @@ jobs:
       build-args: |
         SERVER_VERSION=1.22.0
       image_tag: |
-        1.22.0-bullseye-r3
+        1.22.0-bullseye-r4
         1.22.0-bullseye
         1.22.0
         1.22

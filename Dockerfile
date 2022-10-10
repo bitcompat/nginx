@@ -50,6 +50,9 @@ RUN git clone https://github.com/google/ngx_brotli.git /bitnami/blacksmith-sando
 COPY --link --from=libmaxminddb_build /opt/bitnami/ /opt/bitnami/
 RUN install_packages libgeoip-dev
 
+COPY --link --from=ghcr.io/bitcompat/render-template:1.0.3 /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/gosu:1.14.0 /opt/bitnami/ /opt/bitnami/
+
 RUN <<EOT bash
     set -ex
     cd /opt/src
@@ -82,13 +85,11 @@ RUN install_packages binutils
 RUN find /opt/bitnami/ -name "*.so*" -type f | xargs strip --strip-all
 RUN find /opt/bitnami/ -executable -type f | xargs strip --strip-all || true
 RUN chown 1001:1001 -R /opt/bitnami/nginx
+COPY --link rootfs /
 
 FROM docker.io/bitnami/minideb:bullseye as stage-0
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-COPY --link rootfs /
-COPY --link --from=ghcr.io/bitcompat/render-template:1.0.3 /opt/bitnami/ /opt/bitnami/
-COPY --link --from=ghcr.io/bitcompat/gosu:1.14.0 /opt/bitnami/ /opt/bitnami/
 COPY --link --from=builder /opt/bitnami/ /opt/bitnami/
 
 # Install required system packages and dependencies
@@ -97,7 +98,7 @@ RUN <<EOT bash
     install_packages acl ca-certificates curl gzip libc6 libcrypt1 libgeoip1 libpcre3 libssl1.1 procps tar zlib1g libgeoip1
     apt-get update && apt-get upgrade -y && rm -r /var/lib/apt/lists /var/cache/apt/archives
 
-    mkdir -p /bitnami/nginx
+    mkdir -p /bitnami/nginx/conf/vhosts
     chown 1001:1001 -R /bitnami/nginx
 
     chmod g+rwX /opt/bitnami
