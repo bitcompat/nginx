@@ -97,6 +97,9 @@ RUN <<EOT bash
     install_packages acl ca-certificates curl gzip libc6 libcrypt1 libgeoip1 libpcre3 libssl1.1 procps tar zlib1g libgeoip1
     apt-get update && apt-get upgrade -y && rm -r /var/lib/apt/lists /var/cache/apt/archives
 
+    mkdir -p /bitnami/nginx
+    chown 1001:1001 -R /bitnami/nginx
+
     chmod g+rwX /opt/bitnami
     ln -sf /dev/stdout /opt/bitnami/nginx/logs/access.log
     ln -sf /dev/stderr /opt/bitnami/nginx/logs/error.log
