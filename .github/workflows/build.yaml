@@ -10,6 +10,7 @@ jobs:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: main
+      cache-scope: nginx-1-23
       build-args: |
         SERVER_VERSION=1.23.1
       image_tag: |
@@ -24,6 +25,7 @@ jobs:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: main
+      cache-scope: nginx-1-22
       build-args: |
         SERVER_VERSION=1.22.0
       image_tag: |
