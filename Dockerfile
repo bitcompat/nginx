@@ -81,6 +81,7 @@ RUN cp /bitnami/blacksmith-sandox/nginx-module-substitutions-filter-0.20220124.0
 RUN install_packages binutils
 RUN find /opt/bitnami/ -name "*.so*" -type f | xargs strip --strip-all
 RUN find /opt/bitnami/ -executable -type f | xargs strip --strip-all || true
+RUN chown 1001:1001 -R /opt/bitnami/nginx
 
 FROM docker.io/bitnami/minideb:bullseye as stage-0
 
