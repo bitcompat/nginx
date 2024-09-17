@@ -51,7 +51,7 @@ COPY --link --from=libmaxminddb_build /opt/bitnami/ /opt/bitnami/
 RUN install_packages libgeoip-dev
 
 COPY --link --from=ghcr.io/bitcompat/render-template:1.0.3 /opt/bitnami/ /opt/bitnami/
-COPY --link --from=ghcr.io/bitcompat/gosu:1.14.0 /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/gosu:1.17.0 /opt/bitnami/ /opt/bitnami/
 
 RUN <<EOT bash
     set -ex
