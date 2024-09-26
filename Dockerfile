@@ -1,8 +1,8 @@
-# syntax=docker/dockerfile:1.4
+# syntax=docker/dockerfile:1.10
 
-ARG SERVER_VERSION=1.23.0
+ARG BUILD_VERSION=1.27.1
 # renovate: datasource=github-releases depName=maxmind/libmaxminddb
-ARG LIBMAXMINDDB_VERSION=1.6.0
+ARG LIBMAXMINDDB_VERSION=1.11.0
 
 FROM bitnami/minideb:bullseye as libmaxminddb_build
 
@@ -34,11 +34,11 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN install_packages build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev libgd-dev libxml2 libxml2-dev uuid-dev git ca-certificates
 RUN mkdir -p /opt/src
 
-ARG SERVER_VERSION
-ADD --link http://nginx.org/download/nginx-${SERVER_VERSION}.tar.gz /opt/src/nginx-${SERVER_VERSION}.tar.gz
+ARG BUILD_VERSION
+ADD --link http://nginx.org/download/nginx-${BUILD_VERSION}.tar.gz /opt/src/nginx-${BUILD_VERSION}.tar.gz
 
 RUN mkdir -p /bitnami/blacksmith-sandox
-RUN git clone -b"v0.2.0" https://github.com/vozlt/nginx-module-vts.git /bitnami/blacksmith-sandox/nginx-module-vts-0.2.0
+RUN git clone -b"v0.2.2" https://github.com/vozlt/nginx-module-vts.git /bitnami/blacksmith-sandox/nginx-module-vts-0.2.0
 RUN git clone -b"3.4" https://github.com/leev/ngx_http_geoip2_module.git /bitnami/blacksmith-sandox/nginx-module-geoip2-3.4.0
 RUN git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git /bitnami/blacksmith-sandox/nginx-module-substitutions-filter-0.20220124.0 && \
     cd /bitnami/blacksmith-sandox/nginx-module-substitutions-filter-0.20220124.0 && \
@@ -51,16 +51,16 @@ COPY --link --from=libmaxminddb_build /opt/bitnami/ /opt/bitnami/
 RUN install_packages libgeoip-dev
 
 COPY --link --from=ghcr.io/bitcompat/render-template:1.0.3 /opt/bitnami/ /opt/bitnami/
-COPY --link --from=ghcr.io/bitcompat/gosu:1.14.0 /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/gosu:1.17.0 /opt/bitnami/ /opt/bitnami/
 
 RUN <<EOT bash
     set -ex
     cd /opt/src
-    tar xf nginx-${SERVER_VERSION}.tar.gz
+    tar xf nginx-${BUILD_VERSION}.tar.gz
 
     export PKG_CONFIG_PATH=/opt/bitnami/common/lib/pkgconfig:\$PKG_CONFIG_PATH
 
-    pushd nginx-${SERVER_VERSION}
+    pushd nginx-${BUILD_VERSION}
     ./configure --prefix=/opt/bitnami/nginx --with-http_stub_status_module --with-stream --with-http_gzip_static_module --with-mail \
     --with-http_realip_module --with-http_stub_status_module --with-http_v2_module --with-http_ssl_module --with-mail_ssl_module \
     --with-http_gunzip_module --with-threads --with-http_auth_request_module --with-http_sub_module --with-http_geoip_module \
@@ -75,8 +75,8 @@ RUN <<EOT bash
 EOT
 
 RUN mkdir -p /opt/bitnami/nginx/licenses
-RUN cp /opt/src/nginx-${SERVER_VERSION}/LICENSE /opt/bitnami/nginx/licenses/nginx-${SERVER_VERSION}.txt
-RUN cp /bitnami/blacksmith-sandox/nginx-module-vts-0.2.0/LICENSE /opt/bitnami/nginx/licenses/nginx-module-vts-0.2.0.txt
+RUN cp /opt/src/nginx-${BUILD_VERSION}/LICENSE /opt/bitnami/nginx/licenses/nginx-${BUILD_VERSION}.txt
+RUN cp /bitnami/blacksmith-sandox/nginx-module-vts-0.2.0/LICENSE /opt/bitnami/nginx/licenses/nginx-module-vts-0.2.2.txt
 RUN cp /bitnami/blacksmith-sandox/nginx-module-brotli-0.20220429.0/LICENSE /opt/bitnami/nginx/licenses/nginx-module-brotli-0.20220429.0.txt
 RUN cp /bitnami/blacksmith-sandox/nginx-module-geoip2-3.4.0/LICENSE /opt/bitnami/nginx/licenses/nginx-module-geoip2-3.4.0.txt
 RUN cp /bitnami/blacksmith-sandox/nginx-module-substitutions-filter-0.20220124.0/README /opt/bitnami/nginx/licenses/nginx-module-substitutions-filter-0.20220124.0.txt
@@ -107,18 +107,18 @@ RUN <<EOT bash
     /opt/bitnami/scripts/nginx/postunpack.sh
 EOT
 
-ARG SERVER_VERSION
+ARG BUILD_VERSION
 ARG TARGETARCH
 
 LABEL org.opencontainers.image.source="https://github.com/bitcompat/nginx" \
       org.opencontainers.image.title="nginx" \
-      org.opencontainers.image.version="${SERVER_VERSION}"
+      org.opencontainers.image.version="${BUILD_VERSION}"
 
 ENV HOME="/" \
     OS_ARCH="$TARGETARCH" \
     OS_FLAVOUR="debian-11" \
     OS_NAME="linux" \
-    APP_VERSION="${SERVER_VERSION}" \
+    APP_VERSION="${BUILD_VERSION}" \
     BITNAMI_APP_NAME="nginx" \
     NGINX_HTTPS_PORT_NUMBER="" \
     NGINX_HTTP_PORT_NUMBER="" \

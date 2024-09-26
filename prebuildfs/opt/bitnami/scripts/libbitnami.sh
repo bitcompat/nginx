@@ -1,6 +1,8 @@
 #!/bin/bash
+# Copyright Broadcom, Inc. All Rights Reserved.
+# SPDX-License-Identifier: APACHE-2.0
 #
-# Bitcompat custom library
+# Bitnami custom library
 
 # shellcheck disable=SC1091
 
@@ -31,7 +33,7 @@ print_welcome_page() {
 }
 
 ########################
-# Print the welcome page for a Bitcompat Docker image
+# Print the welcome page for a Bitnami Docker image
 # Globals:
 #   BITNAMI_APP_NAME
 # Arguments:
@@ -42,10 +44,9 @@ print_welcome_page() {
 print_image_welcome_page() {
     local github_url="https://github.com/bitcompat/nginx"
 
-    log ""
-    log "${BOLD}Welcome to the Bitcompat ${BITNAMI_APP_NAME} container${RESET}"
-    log "Subscribe to project updates by watching ${BOLD}${github_url}${RESET}"
-    log "Submit issues and feature requests at ${BOLD}${github_url}/issues${RESET}"
-    log ""
+    info ""
+    info "${BOLD}Welcome to Bitcompat ${BITNAMI_APP_NAME} container${RESET}"
+    info "Subscribe to project updates by watching ${BOLD}${github_url}${RESET}"
+    info "Submit issues and feature requests at ${BOLD}${github_url}/issues${RESET}"
+    info ""
 }
-

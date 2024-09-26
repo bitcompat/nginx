@@ -1,6 +1,8 @@
 #!/bin/bash
+# Copyright Broadcom, Inc. All Rights Reserved.
+# SPDX-License-Identifier: APACHE-2.0
 #
-# Bitcompat NGINX library
+# Bitnami NGINX library
 
 # shellcheck disable=SC1090,SC1091
 
@@ -128,18 +130,21 @@ nginx_validate() {
             print_validation_error "The allowed values for ${1} are: yes no"
         fi
     }
+    check_valid_port() {
+        local port_var="${1:?missing port variable}"
+        local validate_port_args=()
+        local err
+        ! am_i_root && validate_port_args+=("-unprivileged")
+        if ! err="$(validate_port "${validate_port_args[@]}" "${!port_var}")"; then
+            print_validation_error "An invalid port was specified in the environment variable ${port_var}: ${err}."
+        fi
+    }
 
     ! is_empty_value "$NGINX_ENABLE_ABSOLUTE_REDIRECT" && check_yes_no_value "NGINX_ENABLE_ABSOLUTE_REDIRECT"
     ! is_empty_value "$NGINX_ENABLE_PORT_IN_REDIRECT" && check_yes_no_value "NGINX_ENABLE_PORT_IN_REDIRECT"
 
-    if [[ -n "${NGINX_HTTP_PORT_NUMBER:-}" ]]; then
-        local -a validate_port_args=()
-        ! am_i_root && validate_port_args+=("-unprivileged")
-        validate_port_args+=("${NGINX_HTTP_PORT_NUMBER}")
-        if ! err=$(validate_port "${validate_port_args[@]}"); then
-            print_validation_error "An invalid port was specified in the environment variable NGINX_HTTP_PORT_NUMBER: $err"
-        fi
-    fi
+    ! is_empty_value "$NGINX_HTTP_PORT_NUMBER" && check_valid_port "NGINX_HTTP_PORT_NUMBER"
+    ! is_empty_value "$NGINX_HTTPS_PORT_NUMBER" && check_valid_port "NGINX_HTTPS_PORT_NUMBER"
 
     if ! is_file_writable "$NGINX_CONF_FILE"; then
         warn "The NGINX configuration file '${NGINX_CONF_FILE}' is not writable by current user. Configurations based on environment variables will not be applied."
@@ -158,6 +163,11 @@ nginx_validate() {
 #########################
 nginx_initialize() {
     info "Initializing NGINX"
+
+    # bypassing the setup.sh logic. If the file already exists do not overwrite (in
+    # case someone mounts a configuration file in /opt/bitnami/nginx/conf)
+    debug "Copying files from $NGINX_DEFAULT_CONF_DIR to $NGINX_CONF_DIR"
+    cp -nr "$NGINX_DEFAULT_CONF_DIR"/. "$NGINX_CONF_DIR" || true
 
     # This fixes an issue where the trap would kill the entrypoint.sh, if a PID was left over from a previous run
     # Exec replaces the process without creating a new one, and when the container is restarted it may have the same PID
@@ -188,11 +198,25 @@ nginx_initialize() {
         nginx_user_configuration="$(sed -E "s/(^user)/# \1/g" "$NGINX_CONF_FILE")"
         is_file_writable "$NGINX_CONF_FILE" && echo "$nginx_user_configuration" >"$NGINX_CONF_FILE"
     fi
+    # Configure HTTP port number
     if [[ -n "${NGINX_HTTP_PORT_NUMBER:-}" ]]; then
         nginx_configure_port "$NGINX_HTTP_PORT_NUMBER"
     fi
+    # Configure HTTPS port number
+    if [[ -n "${NGINX_HTTPS_PORT_NUMBER:-}" ]] && [[ -f "${NGINX_SERVER_BLOCKS_DIR}/default-https-server-block.conf" ]]; then
+        nginx_configure_port "$NGINX_HTTPS_PORT_NUMBER" "${NGINX_SERVER_BLOCKS_DIR}/default-https-server-block.conf"
+    fi
     nginx_configure "absolute_redirect" "$(is_boolean_yes "$NGINX_ENABLE_ABSOLUTE_REDIRECT" && echo "on" || echo "off" )"
     nginx_configure "port_in_redirect" "$(is_boolean_yes "$NGINX_ENABLE_PORT_IN_REDIRECT" && echo "on" || echo "off" )"
+    # Stream configuration
+    if is_boolean_yes "$NGINX_ENABLE_STREAM" && is_file_writable "$NGINX_CONF_FILE"; then
+        cat >> "$NGINX_CONF_FILE" <<EOF
+
+stream {
+    include  "${NGINX_STREAM_SERVER_BLOCKS_DIR}/*.conf";
+}
+EOF
+    fi
 }
 
 ########################
@@ -244,14 +268,14 @@ ensure_nginx_app_configuration_exists() {
             --server-aliases)
             var_name="$(echo "$1" | sed -e "s/^--//" -e "s/-/_/g")"
             shift
-            read -r -a "$var_name" <<<"$1"
+            read -r -a "${var_name?}" <<<"$1"
             ;;
         --disable | \
             --disable-http | \
             --disable-https)
 
             var_name="$(echo "$1" | sed -e "s/^--//" -e "s/-/_/g")"
-            export "${var_name}=yes"
+            export "${var_name?}=yes"
             ;;
         --type | \
             --server-name | \
@@ -265,7 +289,7 @@ ensure_nginx_app_configuration_exists() {
 
             var_name="$(echo "$1" | sed -e "s/^--//" -e "s/-/_/g")"
             shift
-            export "${var_name}"="$1"
+            export "${var_name?}"="$1"
             ;;
         *)
             echo "Invalid command line flag $1" >&2
@@ -411,7 +435,7 @@ ensure_nginx_prefix_configuration_exists() {
 
             var_name="$(echo "$1" | sed -e "s/^--//" -e "s/-/_/g")"
             shift
-            declare "${var_name}"="$1"
+            declare "${var_name?}"="$1"
             ;;
         *)
             echo "Invalid command line flag $1" >&2
@@ -491,7 +515,7 @@ nginx_update_app_configuration() {
             )
                 var_name="$(echo "$1" | sed -e "s/^--//" -e "s/-/_/g")"
                 shift
-                read -r -a "$var_name" <<<"$1"
+                read -r -a "${var_name?}" <<<"$1"
                 ;;
             # Common flags
             --enable-http \
@@ -500,7 +524,7 @@ nginx_update_app_configuration() {
             | --disable-https \
             )
                 var_name="$(echo "$1" | sed -e "s/^--//" -e "s/-/_/g")"
-                declare "${var_name}=yes"
+                declare "${var_name?}=yes"
                 ;;
             --server-name \
             | --http-port \
@@ -508,7 +532,7 @@ nginx_update_app_configuration() {
             )
                 var_name="$(echo "$1" | sed -e "s/^--//" -e "s/-/_/g")"
                 shift
-                declare "${var_name}=${1}"
+                declare "${var_name?}=${1}"
                 ;;
 
             *)
@@ -619,5 +643,41 @@ nginx_custom_init_scripts() {
         rm -f "$tmp_file"
     else
         info "No custom scripts in $NGINX_INITSCRIPTS_DIR"
+    fi
+}
+
+########################
+# Generate sample TLS certificates without passphrase for sample HTTPS server_block
+# Globals:
+#   NGINX_*
+# Arguments:
+#   None
+# Returns:
+#   None
+#########################
+nginx_generate_sample_certs() {
+    local certs_dir="${NGINX_CONF_DIR}/bitnami/certs"
+
+    if ! is_boolean_yes "$NGINX_SKIP_SAMPLE_CERTS" && [[ ! -f "${certs_dir}/server.crt" ]]; then
+        # Check certificates directory exists and is writable
+        if [[ -d "$certs_dir" && -w "$certs_dir" ]]; then
+            SSL_KEY_FILE="${certs_dir}/server.key"
+            SSL_CERT_FILE="${certs_dir}/server.crt"
+            SSL_CSR_FILE="${certs_dir}/server.csr"
+            SSL_SUBJ="/CN=example.com"
+            SSL_EXT="subjectAltName=DNS:example.com,DNS:www.example.com,IP:127.0.0.1"
+            rm -f "$SSL_KEY_FILE" "$SSL_CERT_FILE"
+            openssl genrsa -out "$SSL_KEY_FILE" 4096
+            # OpenSSL version 1.0.x does not use the same parameters as OpenSSL >= 1.1.x
+            if [[ "$(openssl version | grep -oE "[0-9]+\.[0-9]+")" == "1.0" ]]; then
+                openssl req -new -sha256 -out "$SSL_CSR_FILE" -key "$SSL_KEY_FILE" -nodes -subj "$SSL_SUBJ"
+            else
+                openssl req -new -sha256 -out "$SSL_CSR_FILE" -key "$SSL_KEY_FILE" -nodes -subj "$SSL_SUBJ" -addext "$SSL_EXT"
+            fi
+            openssl x509 -req -sha256 -in "$SSL_CSR_FILE" -signkey "$SSL_KEY_FILE" -out "$SSL_CERT_FILE" -days 1825 -extfile <(echo -n "$SSL_EXT")
+            rm -f "$SSL_CSR_FILE"
+        else
+            warn "The certificates directories '${certs_dir}' does not exist or is not writable, skipping sample HTTPS certificates generation"
+        fi
     fi
 }
