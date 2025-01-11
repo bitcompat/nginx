@@ -2,7 +2,7 @@
 
 ARG BUILD_VERSION=1.27.1
 # renovate: datasource=github-releases depName=maxmind/libmaxminddb
-ARG LIBMAXMINDDB_VERSION=1.11.0
+ARG LIBMAXMINDDB_VERSION=1.12.2
 
 FROM bitnami/minideb:bullseye as libmaxminddb_build
 
