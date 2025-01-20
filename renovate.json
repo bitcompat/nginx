@@ -1,11 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":separatePatchReleases"
   ],
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": [
         "^Dockerfile$"
       ],
@@ -16,6 +17,7 @@
       "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{/if}}"
     },
     {
+      "customType": "regex",
       "fileMatch": [
         "^\\.github/workflows/.+\\.ya?ml$"
       ],
@@ -29,13 +31,17 @@
   "packageRules": [
     {
       "description": "Require dashboard approval for major updates",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "dependencyDashboardApproval": true
     },
     {
-      "matchDatasources": ["docker"],
+      "matchDatasources": [
+        "docker"
+      ],
       "rangeStrategy": "replace",
-      "stabilityDays": 1
+      "minimumReleaseAge": "1 day"
     }
   ]
 }
