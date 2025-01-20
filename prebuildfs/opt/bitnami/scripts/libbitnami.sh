@@ -42,11 +42,12 @@ print_welcome_page() {
 #   None
 #########################
 print_image_welcome_page() {
-    local github_url="https://github.com/bitcompat/nginx"
+    local github_url="https://github.com/bitnami/containers"
 
     info ""
-    info "${BOLD}Welcome to Bitcompat ${BITNAMI_APP_NAME} container${RESET}"
+    info "${BOLD}Welcome to the Bitnami ${BITNAMI_APP_NAME} container${RESET}"
     info "Subscribe to project updates by watching ${BOLD}${github_url}${RESET}"
-    info "Submit issues and feature requests at ${BOLD}${github_url}/issues${RESET}"
+    info "Did you know there are enterprise versions of the Bitnami catalog? For enhanced secure software supply chain features, unlimited pulls from Docker, LTS support, or application customization, see Bitnami Premium or Tanzu Application Catalog. See https://www.arrow.com/globalecs/na/vendors/bitnami/ for more information."
     info ""
 }
+

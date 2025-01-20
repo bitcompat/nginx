@@ -10,7 +10,7 @@ jobs:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: 1_27
-      version: 1.27.1 # renovate: datasource=github-releases depName=nginx/nginx
+      version: 1.27.3 # renovate: datasource=github-releases depName=nginx/nginx
       latest: true
       major_only_tag: true
       revision: 1
@@ -20,5 +20,5 @@ jobs:
     with:
       name: 1_26
       version: 1.26.2
-      revision: 1
+      revision: 2
     secrets: inherit
