@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.12
+# syntax=docker/dockerfile:1.13
 
 ARG BUILD_VERSION=1.27.1
 # renovate: datasource=github-releases depName=maxmind/libmaxminddb
