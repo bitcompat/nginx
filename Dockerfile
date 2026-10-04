@@ -4,7 +4,7 @@ ARG BUILD_VERSION=1.27.1
 # renovate: datasource=github-releases depName=maxmind/libmaxminddb
 ARG LIBMAXMINDDB_VERSION=1.14.1
 
-FROM bitnami/minideb:bullseye as libmaxminddb_build
+FROM bitnami/minideb:trixie as libmaxminddb_build
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG LIBMAXMINDDB_VERSION
@@ -26,12 +26,12 @@ RUN rm -rf /opt/bitnami/common/lib/libmaxminddb.a /opt/bitnami/common/lib/libmax
 RUN mkdir -p /opt/bitnami/common/licenses && \
     cp libmaxminddb-${LIBMAXMINDDB_VERSION}/LICENSE /opt/bitnami/common/licenses/libmaxminddb-${LIBMAXMINDDB_VERSION}.txt
 
-FROM docker.io/bitnami/minideb:bullseye as builder
+FROM docker.io/bitnami/minideb:trixie as builder
 
 COPY prebuildfs /
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN install_packages build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev libgd-dev libxml2 libxml2-dev uuid-dev git ca-certificates
+RUN install_packages build-essential libpcre2-8-0 libpcre2-dev zlib1g zlib1g-dev libssl-dev libgd-dev libxml2 libxml2-dev uuid-dev git ca-certificates
 RUN mkdir -p /opt/src
 
 ARG BUILD_VERSION
@@ -50,8 +50,8 @@ RUN git clone https://github.com/google/ngx_brotli.git /bitnami/blacksmith-sando
 COPY --link --from=libmaxminddb_build /opt/bitnami/ /opt/bitnami/
 RUN install_packages libgeoip-dev
 
-COPY --link --from=ghcr.io/bitcompat/render-template:1.0.3 /opt/bitnami/ /opt/bitnami/
-COPY --link --from=ghcr.io/bitcompat/gosu:1.17.0 /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/render-template:1.0.3-trixie /opt/bitnami/ /opt/bitnami/
+COPY --link --from=ghcr.io/bitcompat/gosu:1.18.0-trixie /opt/bitnami/ /opt/bitnami/
 
 RUN <<EOT bash
     set -ex
@@ -87,7 +87,7 @@ RUN find /opt/bitnami/ -executable -type f | xargs strip --strip-all || true
 RUN chown 1001:1001 -R /opt/bitnami/nginx
 COPY --link rootfs /
 
-FROM docker.io/bitnami/minideb:bullseye as stage-0
+FROM docker.io/bitnami/minideb:trixie as stage-0
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY --link --from=builder /opt/bitnami/ /opt/bitnami/
@@ -95,7 +95,7 @@ COPY --link --from=builder /opt/bitnami/ /opt/bitnami/
 # Install required system packages and dependencies
 RUN <<EOT bash
     set -e
-    install_packages acl ca-certificates curl gzip libc6 libcrypt1 libgeoip1 libpcre3 libssl1.1 procps tar zlib1g libgeoip1
+    install_packages acl ca-certificates curl gzip libc6 libcrypt1 libgeoip1t64 libpcre2-8-0 libssl3t64 procps tar zlib1g libgeoip1t64
     apt-get update && apt-get upgrade -y && rm -r /var/lib/apt/lists /var/cache/apt/archives
 
     mkdir -p /bitnami/nginx/conf/vhosts
@@ -116,7 +116,7 @@ LABEL org.opencontainers.image.source="https://github.com/bitcompat/nginx" \
 
 ENV HOME="/" \
     OS_ARCH="$TARGETARCH" \
-    OS_FLAVOUR="debian-11" \
+    OS_FLAVOUR="debian-13" \
     OS_NAME="linux" \
     APP_VERSION="${BUILD_VERSION}" \
     BITNAMI_APP_NAME="nginx" \
