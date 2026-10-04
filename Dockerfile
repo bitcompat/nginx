@@ -10,7 +10,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG LIBMAXMINDDB_VERSION
 
 RUN mkdir -p /bitnami/blacksmith-sandbox
-RUN install_packages ca-certificates curl git build-essential
+RUN install_packages ca-certificates curl git build-essential pkg-config
 
 WORKDIR /bitnami/blacksmith-sandbox
 
