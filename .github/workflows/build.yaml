@@ -13,12 +13,10 @@ jobs:
       version: 1.27.3 # renovate: datasource=github-releases depName=nginx/nginx
       latest: true
       major_only_tag: true
-      revision: 1
     secrets: inherit
   build_nginx_1_26:
     uses: bitcompat/base/.github/workflows/build.yaml@main
     with:
       name: 1_26
       version: 1.26.2
-      revision: 2
     secrets: inherit
